@@ -1,11 +1,13 @@
-from physicalInterface.IPhysicalInterface import IPhysicalInterface
+from physicalInterface import IPhysicalInterface
 from utils import Direction
+from environmentSimulator import EnvironmentSimulator
 
 
 class SimPhysicalInterface(IPhysicalInterface):
     def __init__(self):
         super().__init__()
-        self.a = 0
+        self.env = EnvironmentSimulator()
+        self.env.generate()
 
     def forward(self):
         self.a += 1
