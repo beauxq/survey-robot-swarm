@@ -1,8 +1,15 @@
-from enum import Enum
+from enum import IntEnum
 
 
-class Direction(Enum):
-    RIGHT = 0
-    FORWARD = 1
-    LEFT = 2
-    BACK = 3
+class Direction(IntEnum):
+
+    EAST = 0
+    NORTH = 1
+    WEST = 2
+    SOUTH = 3
+    COUNT = 4
+
+    @staticmethod
+    def opposite(given):
+        """ :returns the opposite direction from what is given """
+        return (given + 2) % 4
