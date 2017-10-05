@@ -24,8 +24,12 @@ class SimPhysicalInterface(IPhysicalInterface):
         print("reading here is", str(self.env.get(self.position).objective_value))
 
     def rotate_left(self):
-        self.a += 1
-        print("turned left")
+        self.facing = Direction((self.facing + 1) % 4)
+        print("turned left, now facing", self.facing)
+
+    def rotate_right(self):
+        self.facing = Direction((self.facing - 1) % 4)
+        print("turned right, now facing", self.facing)
 
     def read_sensor(self) -> int:
         return self.a

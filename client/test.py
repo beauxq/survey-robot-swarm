@@ -5,6 +5,9 @@ a = SimPhysicalInterface()
 print(a.env.text_map())
 a.forward()
 a.forward()
+a.rotate_left()
+a.forward()
+a.forward()
 
 """
 b = EnvironmentSimulator()
