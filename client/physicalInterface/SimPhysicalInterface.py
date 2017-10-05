@@ -21,7 +21,6 @@ class SimPhysicalInterface(IPhysicalInterface):
 
         self.position = target_coordinate
         print("moved forward to", str(self.position))
-        print("reading here is", str(self.env.get(self.position).objective_value))
 
     def rotate_left(self):
         self.facing = Direction((self.facing + 1) % 4)
@@ -32,11 +31,7 @@ class SimPhysicalInterface(IPhysicalInterface):
         print("turned right, now facing", self.facing)
 
     def read_sensor(self) -> int:
-        return self.a
+        return self.env.get(self.position).objective_value
 
     def see_obstacles(self, n: Direction) -> bool:
-        return False
-
-    def rotate_right(self):
-        self.a += 1
-        print("turned right")
+        return False  # TODO: implement see_obstacles
