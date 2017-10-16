@@ -1,15 +1,15 @@
 from environmentSimulator.GridSpace import GridSpace
+from utils import Coordinate
 import random
 
 
 class EnvironmentSimulator:
     def __init__(self):
-        pass
-        self._grid = []
+        self._grid = [[GridSpace()]]
 
     def generate(self, width, height, seed=None):
         random.seed(seed)
-        self._grid = [[] for y in range(height)]
+        self._grid = [[] for _ in range(height)]
         for y in range(height):
             for x in range(width):
                 self._grid[y].append(GridSpace(random.choice((True, False)), random.random()))
@@ -27,9 +27,5 @@ class EnvironmentSimulator:
         return to_return
 
     def get(self, x_or_coordinate, y=None):
-        if y is None:
-            # 1st argument is Coordinate
-            x, y = x_or_coordinate.x, x_or_coordinate.y
-        else:
-            x = x_or_coordinate
-        return self._grid[len(self._grid) - (y+1)][x]
+        i0, i1 = Coordinate.to_indexes(len(self._grid), x_or_coordinate, y)
+        return self._grid[i0][i1]

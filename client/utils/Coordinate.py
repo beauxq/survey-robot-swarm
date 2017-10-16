@@ -17,3 +17,13 @@ class Coordinate:
 
     def __repr__(self):
         return "(" + str(self.x) + ", " + str(self.y) + ")"
+
+    @staticmethod
+    def to_indexes(height, x_or_coordinate, y=None) -> tuple:
+        """convert cartesian coordinate to 2-dimensional list indexes"""
+        if y is None:
+            # 1st argument is Coordinate
+            x, y = x_or_coordinate.x, x_or_coordinate.y
+        else:
+            x = x_or_coordinate
+        return height - (y+1), x

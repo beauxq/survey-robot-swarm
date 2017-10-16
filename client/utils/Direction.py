@@ -12,4 +12,4 @@ class Direction(IntEnum):
     @staticmethod
     def opposite(given):
         """ :returns the opposite direction from what is given """
-        return (given + 2) % 4
+        return (given + 2) % Direction.COUNT
