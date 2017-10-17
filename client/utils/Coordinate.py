@@ -27,3 +27,6 @@ class Coordinate:
         else:
             x = x_or_coordinate
         return height - (y+1), x
+
+    def distance_to(self, other) -> int:
+        return abs(self.x - other.x) + abs(self.y - other.y)
