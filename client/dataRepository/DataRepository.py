@@ -1,10 +1,11 @@
 from collections import deque, defaultdict
+from heapq import heappop, heappush
 from threading import Lock
 import math
 
 from dataRepository.GridSpace import GridSpace
 from dataRepository.PathItem import PathItem
-from utils import Coordinate, Knowledge, COORDINATE_CHANGE
+from utils import Coordinate, Knowledge, COORDINATE_CHANGE, Direction
 
 
 class DataRepository:
@@ -114,3 +115,32 @@ class DataRepository:
         self._mutex.release()
 
         return best_target.coordinate
+
+    def find_path(self, start: Coordinate, target: Coordinate) -> list:
+        """:returns a list of directions from start to target"""
+        visited_in_this_search = set()
+        direction_to_arrive_at = {start: None}
+        bfs_queue = [PathItem(start, 0)]
+        current = heappop(bfs_queue)
+
+        while current.coordinate != target:
+            visited_in_this_search.add(current.coordinate)
+
+            for direction in COORDINATE_CHANGE:
+                coordinate_checking = current.coordinate + COORDINATE_CHANGE[direction]
+                if (not self.out_of_bounds(coordinate_checking) and
+                        self._can_travel(coordinate_checking) and
+                        coordinate_checking not in visited_in_this_search):
+                    heappush(bfs_queue, PathItem(coordinate_checking, current.cost + 1))
+                    direction_to_arrive_at[coordinate_checking] = direction
+
+            current = heappop(bfs_queue)
+
+        # now at target, build list of directions
+        to_return = []
+        current_coordinate = target
+        while direction_to_arrive_at[current_coordinate] is not None:
+            to_return.append(direction_to_arrive_at[current_coordinate])
+            current_coordinate += COORDINATE_CHANGE[Direction.opposite(direction_to_arrive_at[current_coordinate])]
+
+        return to_return
