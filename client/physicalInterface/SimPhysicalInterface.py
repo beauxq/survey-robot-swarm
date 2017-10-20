@@ -2,14 +2,12 @@ from physicalInterface import IPhysicalInterface
 from environmentSimulator import EnvironmentSimulator
 from utils import Coordinate, COORDINATE_CHANGE, Direction
 
-SIZE = 10
-
 
 class SimPhysicalInterface(IPhysicalInterface):
-    def __init__(self):
+    def __init__(self, width, height):
         super().__init__()
         self.env = EnvironmentSimulator()
-        self.env.generate(SIZE, SIZE)
+        self.env.generate(width, height)
         self.position = Coordinate(0, 0)
         self.facing = Direction.EAST
 
@@ -33,5 +31,5 @@ class SimPhysicalInterface(IPhysicalInterface):
     def read_sensor(self) -> int:
         return self.env.get(self.position).objective_value
 
-    def see_obstacles(self, n: Direction) -> bool:
-        return False  # TODO: implement see_obstacles
+    def see_obstacles(self, direction: Direction) -> bool:
+        return self.env.get(self.position + COORDINATE_CHANGE[direction]).obstacle

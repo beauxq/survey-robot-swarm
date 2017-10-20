@@ -62,9 +62,16 @@ class DataRepository:
         self._mutex.release()
         return to_return
 
-    def _can_travel(self, target: Coordinate) -> bool:
+    def out_of_bounds(self, coordinate: Coordinate) -> bool:
+        """:returns whether coordinate is outside the grid"""
         # short circuit evaluation - index 0 isn't checked if len(self._data) is 0
-        if target.x < 0 or target.y < 0 or target.y > len(self._data) - 1 or target.x > len(self._data[0]):
+        return (coordinate.x < 0 or
+                coordinate.y < 0 or
+                coordinate.y > len(self._data) - 1 or
+                coordinate.x > len(self._data[0]))
+
+    def _can_travel(self, target: Coordinate) -> bool:
+        if self.out_of_bounds(target):
             return False
         target_space = self._get(target)
         if target_space.obstacle_here in (Knowledge.UNKNOWN, Knowledge.YES) or target_space.occupied:
@@ -73,6 +80,7 @@ class DataRepository:
 
     def find_target(self, start: Coordinate, home: Coordinate) -> Coordinate:
         """decide where the robot at current_coordinate will try to go"""
+        print("find target from: " + str(start) + "  home: " + str(home))
         best_target = PathItem(home, math.inf)
         # breadth-first search for nodes to put in the heap
         path_queue = deque([PathItem(start, start.distance_to(home))])
@@ -81,16 +89,22 @@ class DataRepository:
         self._mutex.acquire()
 
         while len(path_queue):
+            print("going through path_queue, current length: " + str(len(path_queue)))
             current = path_queue.popleft()
+            print("popped: " + str(current))
             # if we don't have a reading for this space yet, it is candidate for best target
             if self._get(current.coordinate).objective_value == Knowledge.UNKNOWN:
+                print("found unknown objective at: " + str(current.coordinate))
                 if current.cost < best_target.cost:
                     best_target = current
             bfs_visited[current.coordinate] = True
             # look at all neighbors
             for direction in COORDINATE_CHANGE:
                 this_neighbor = current.coordinate + COORDINATE_CHANGE[direction]
+                print("looking " + str(direction) + " at: " + str(this_neighbor))
+                print("can travel: " + str(self._can_travel(this_neighbor)))
                 if self._can_travel(this_neighbor) and not bfs_visited[this_neighbor]:
+                    print("can travel and not already visited: " + str(this_neighbor))
                     # calculate cost
                     distance_to_home_change = this_neighbor.distance_to(home) - current.coordinate.distance_to(home)
                     cost = current.cost + DataRepository.TRAVEL_WEIGHT + distance_to_home_change
