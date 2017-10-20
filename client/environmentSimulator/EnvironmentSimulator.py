@@ -12,7 +12,12 @@ class EnvironmentSimulator:
         self._grid = [[] for _ in range(height)]
         for y in range(height):
             for x in range(width):
-                self._grid[y].append(GridSpace(random.choice((True, False)), random.random()))
+                # probability of obstacle
+                obstacle_here = random.random() < 0.3
+                # no obstacles in corners
+                if (x == 0 or x == width-1) and (y == 0 or y == height-1):
+                    obstacle_here = False
+                self._grid[y].append(GridSpace(obstacle_here, random.random()))
 
     def text_map(self) -> str:
         to_return = ""
