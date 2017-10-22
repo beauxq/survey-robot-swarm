@@ -5,7 +5,7 @@ import math
 
 from dataRepository.GridSpace import GridSpace
 from dataRepository.PathItem import PathItem
-from utils import Coordinate, Knowledge, COORDINATE_CHANGE, Direction
+from utils import Coordinate, Knowledge, COORDINATE_CHANGE, Direction, static_vars
 
 
 class DataRepository:
@@ -82,7 +82,7 @@ class DataRepository:
     def find_target(self, start: Coordinate, home: Coordinate) -> Coordinate:
         """decide where the robot at current_coordinate will try to go"""
         print("find target from: " + str(start) + "  home: " + str(home))
-        best_target = PathItem(home, math.inf)
+        best_target = PathItem(home, math.inf)  # return home if there's no where else to go
         # breadth-first search for nodes to put in the heap
         path_queue = deque([PathItem(start, start.distance_to(home))])
         bfs_visited = defaultdict(bool)
@@ -128,9 +128,7 @@ class DataRepository:
 
             for direction in COORDINATE_CHANGE:
                 coordinate_checking = current.coordinate + COORDINATE_CHANGE[direction]
-                if (not self.out_of_bounds(coordinate_checking) and
-                        self._can_travel(coordinate_checking) and
-                        coordinate_checking not in visited_in_this_search):
+                if (self._can_travel(coordinate_checking) and coordinate_checking not in visited_in_this_search):
                     heappush(bfs_queue, PathItem(coordinate_checking, current.cost + 1))
                     direction_to_arrive_at[coordinate_checking] = direction
 
@@ -143,4 +141,25 @@ class DataRepository:
             to_return.append(direction_to_arrive_at[current_coordinate])
             current_coordinate += COORDINATE_CHANGE[Direction.opposite(direction_to_arrive_at[current_coordinate])]
 
+        return to_return
+
+    @static_vars(ROBOT_SYMBOLS={
+        Direction.NORTH: "^",
+        Direction.SOUTH: "v",
+        Direction.WEST: "<",
+        Direction.EAST: ">"
+    })
+    def text_map(self, my_position: Coordinate=None, my_direction: Direction=None) -> str:
+        my_position_indexes = None if my_position is None else Coordinate.to_indexes(len(self._data), my_position)
+
+        to_return = ""
+        for i1 in range(len(self._data)):
+            for i2 in range(len(self._data[i1])):
+                space = self._data[i1][i2]
+                representation = self.text_map.ROBOT_SYMBOLS[my_direction] + " " if \
+                    my_position_indexes is not None and my_position_indexes == (i1, i2) else \
+                    space.text_map_repr() + " "
+                to_return += representation
+            # row complete
+            to_return += "\n"
         return to_return

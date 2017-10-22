@@ -43,11 +43,17 @@ def test_data_repository():
     c = d.find_target(a.position, Coordinate(0, 0))
     print(c)
 
+    p = d.find_path(a.position, c)
+    print(p)
+
+    print(d.text_map(a.position, a.facing))
+
 
 def main():
     # test_sim_physical_interface()
     # test_environment_simulator()
     test_data_repository()
+
 
 if __name__ == "__main__":
     main()
