@@ -68,8 +68,8 @@ class DataRepository:
         # short circuit evaluation - index 0 isn't checked if len(self._data) is 0
         return (coordinate.x < 0 or
                 coordinate.y < 0 or
-                coordinate.y > len(self._data) - 1 or
-                coordinate.x > len(self._data[0]))
+                coordinate.y >= len(self._data) or
+                coordinate.x >= len(self._data[0]))
 
     def _can_travel(self, target: Coordinate) -> bool:
         if self.out_of_bounds(target):
@@ -93,6 +93,8 @@ class DataRepository:
             print("going through path_queue, current length: " + str(len(path_queue)))
             current = path_queue.popleft()
             print("popped: " + str(current))
+            if bfs_visited[current.coordinate]:
+                continue  # this one got visited while it was in queue
             # if we don't have a reading for this space yet, it is candidate for best target
             if self._get(current.coordinate).objective_value == Knowledge.UNKNOWN:
                 print("found unknown objective at: " + str(current.coordinate))
@@ -128,20 +130,20 @@ class DataRepository:
 
             for direction in COORDINATE_CHANGE:
                 coordinate_checking = current.coordinate + COORDINATE_CHANGE[direction]
-                if (self._can_travel(coordinate_checking) and coordinate_checking not in visited_in_this_search):
+                if self._can_travel(coordinate_checking) and coordinate_checking not in visited_in_this_search:
                     heappush(bfs_queue, PathItem(coordinate_checking, current.cost + 1))
                     direction_to_arrive_at[coordinate_checking] = direction
 
             current = heappop(bfs_queue)
 
         # now at target, build list of directions
-        to_return = []
+        to_return = deque()
         current_coordinate = target
         while direction_to_arrive_at[current_coordinate] is not None:
-            to_return.append(direction_to_arrive_at[current_coordinate])
+            to_return.appendleft(direction_to_arrive_at[current_coordinate])
             current_coordinate += COORDINATE_CHANGE[Direction.opposite(direction_to_arrive_at[current_coordinate])]
 
-        return to_return
+        return list(to_return)
 
     @static_vars(ROBOT_SYMBOLS={
         Direction.NORTH: "^",

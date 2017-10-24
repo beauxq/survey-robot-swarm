@@ -28,6 +28,21 @@ class SimPhysicalInterface(IPhysicalInterface):
         self.facing = Direction((self.facing - 1) % 4)
         print("turned right, now facing", self.facing)
 
+    def turn(self, desired_direction: Direction):
+        print("about to turn: " + str(desired_direction))
+        if self.facing == desired_direction:
+            pass  # don't evaluate elif expressions
+        # not already facing the correct direction
+        elif int(desired_direction) == (int(self.facing) + 1) % int(Direction.COUNT):
+            self.rotate_left()
+        elif (int(desired_direction) + 1) % int(Direction.COUNT) == int(self.facing):
+            self.rotate_right()
+        else:  # 180
+            # TODO:might there be a reason to alternate 2 lefts and 2 rights?
+            self.rotate_left()
+            self.rotate_left()
+        print("just turned: " + str(self.facing))
+
     def read_sensor(self) -> int:
         return self.env.get(self.position).objective_value
 

@@ -1,4 +1,4 @@
-from physicalInterface import SimPhysicalInterface
+from physicalInterface import SimPhysicalInterface, IPhysicalInterface
 from environmentSimulator import EnvironmentSimulator
 from dataRepository import DataRepository
 from utils import Coordinate, COORDINATE_CHANGE, Knowledge
@@ -24,6 +24,16 @@ def test_environment_simulator():
     print(b.text_map())
 
 
+def visit(physical_interface: IPhysicalInterface, d: DataRepository):
+    # visit current space
+    d.set_objective(physical_interface.position, physical_interface.read_sensor())
+    # check obstacles
+    for direction in COORDINATE_CHANGE:
+        looking_at = physical_interface.position + COORDINATE_CHANGE[direction]
+        if not d.out_of_bounds(looking_at):
+            d.set_obstacle(looking_at, Knowledge.YES if physical_interface.see_obstacles(direction) else Knowledge.NO)
+
+
 def test_data_repository():
     width = 10
     height = 10
@@ -32,21 +42,22 @@ def test_data_repository():
 
     print(a.env.text_map())
 
-    # visit current space
-    d.set_objective(a.position, a.read_sensor())
-    # check obstacles
-    for direction in COORDINATE_CHANGE:
-        looking_at = a.position + COORDINATE_CHANGE[direction]
-        if not d.out_of_bounds(looking_at):
-            d.set_obstacle(looking_at, Knowledge.YES if a.see_obstacles(direction) else Knowledge.NO)
+    visit(a, d)
 
     c = d.find_target(a.position, Coordinate(0, 0))
-    print(c)
+    while c != Coordinate(0, 0):
+        print("target:", c)
 
-    p = d.find_path(a.position, c)
-    print(p)
+        p = d.find_path(a.position, c)
+        print("path:", p)
+        if len(p) > 0:
+            a.turn(p[0])
+            a.forward()
+            visit(a, d)
 
-    print(d.text_map(a.position, a.facing))
+        print(d.text_map(a.position, a.facing))
+        input()
+        c = d.find_target(a.position, Coordinate(0, 0))
 
 
 def main():

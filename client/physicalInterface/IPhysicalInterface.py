@@ -1,14 +1,18 @@
-from utils import Direction
+from utils import Direction, Coordinate
 
 
 class IPhysicalInterface:
     def __init__(self):
-        pass
+        self.position = Coordinate()
+        self.facing = Direction.EAST
 
     def rotate_left(self):
         raise NotImplementedError
 
     def rotate_right(self):
+        raise NotImplementedError
+
+    def turn(self, direction: Direction):
         raise NotImplementedError
 
     def forward(self):
