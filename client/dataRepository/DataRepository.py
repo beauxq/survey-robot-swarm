@@ -158,9 +158,9 @@ class DataRepository:
         for i1 in range(len(self._data)):
             for i2 in range(len(self._data[i1])):
                 space = self._data[i1][i2]
-                representation = self.text_map.ROBOT_SYMBOLS[my_direction] + " " if \
-                    my_position_indexes is not None and my_position_indexes == (i1, i2) else \
-                    space.text_map_repr() + " "
+                representation = self.text_map.ROBOT_SYMBOLS[my_direction] + " " \
+                    if my_position_indexes is not None and my_position_indexes == (i1, i2) \
+                    else space.text_map_repr() + " "
                 to_return += representation
             # row complete
             to_return += "\n"
