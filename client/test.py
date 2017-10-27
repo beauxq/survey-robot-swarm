@@ -3,9 +3,11 @@ from environmentSimulator import EnvironmentSimulator
 from dataRepository import DataRepository
 from utils import Coordinate, COORDINATE_CHANGE, Knowledge
 
+import random
+
 
 def test_sim_physical_interface():
-    a = SimPhysicalInterface(10, 10)
+    a = SimPhysicalInterface(10, 10, random.randint(76, 76000))
     print(a.env.text_map())
     a.forward()
     print("read_sensor:", a.read_sensor())
@@ -37,7 +39,9 @@ def visit(physical_interface: IPhysicalInterface, d: DataRepository):
 def test_data_repository():
     width = 10
     height = 10
-    a = SimPhysicalInterface(width, height)
+    seed = random.randint(76, 76000)
+    print("seed:", seed)
+    a = SimPhysicalInterface(width, height, seed)
     d = DataRepository(width, height)
 
     print(a.env.text_map())

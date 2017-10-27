@@ -4,10 +4,10 @@ from utils import Coordinate, COORDINATE_CHANGE, Direction
 
 
 class SimPhysicalInterface(IPhysicalInterface):
-    def __init__(self, width, height):
+    def __init__(self, width: int, height: int, seed: int):
         super().__init__()
         self.env = EnvironmentSimulator()
-        self.env.generate(width, height)
+        self.env.generate(width, height, seed)
         self.position = Coordinate(0, 0)
         self.facing = Direction.EAST
 
