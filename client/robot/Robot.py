@@ -1,8 +1,7 @@
 from dataRepository import DataRepository
 from physicalInterface import SimPhysicalInterface
+from comm import CommunicationManager, Message
 from utils import COORDINATE_CHANGE, Knowledge, Coordinate
-
-from threading import Thread
 
 
 class Robot:
@@ -10,22 +9,33 @@ class Robot:
         self.data = DataRepository(map_width, map_height)
         self.interface = SimPhysicalInterface(map_width, map_height, seed)
         self.home = home
+        self.communication = CommunicationManager(self.data)
 
         self.interface.position = home
 
     def visit_current_space(self):
+        message = Message()
+
         # objective reading
+        already_have = self.data.get_objective(self.interface.position) != Knowledge.UNKNOWN
         self.data.set_objective(self.interface.position, self.interface.read_sensor())
+        if not already_have:
+            message.add_objective(self.interface.position, self.data.get_objective(self.interface.position))
+
         # check obstacles
         for direction in COORDINATE_CHANGE:
             looking_at = self.interface.position + COORDINATE_CHANGE[direction]
             if not self.data.out_of_bounds(looking_at):
-                self.data.set_obstacle(looking_at,
-                                       Knowledge.YES if self.interface.see_obstacles(direction) else Knowledge.NO)
+                previous = self.data.get_obstacle(looking_at)
+                new = Knowledge.YES if self.interface.see_obstacles(direction) else Knowledge.NO
+                if new != previous:
+                    self.data.set_obstacle(looking_at, new)
+                    message.add_obstacle(looking_at, new)
+
+        self.communication.send_message(message)
 
     def go(self):
-        communication = Thread(target=self.communication_run(), args=(self,))
-        communication.start()
+        self.communication.run_all_threads()
 
         self.visit_current_space()  # home
 
@@ -37,6 +47,7 @@ class Robot:
             path_to_target = self.data.find_path(self.interface.position, target)
             print("path:", path_to_target)
             if len(path_to_target) > 0:
+                # TODO: get permission from communication thread to make this move
                 self.interface.turn(path_to_target[0])
                 self.interface.forward()
                 self.visit_current_space()
@@ -46,4 +57,4 @@ class Robot:
 
     def communication_run(self):
         """this is the main control of the communication thread"""
-        pass
+        print("running communication thread")

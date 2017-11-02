@@ -29,5 +29,6 @@ def main():
     robot = Robot(width, height, Coordinate(home_x, home_y), seed)
     robot.go()
 
+
 if __name__ == "__main__":
     main()
