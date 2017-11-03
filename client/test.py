@@ -1,6 +1,7 @@
 from physicalInterface import SimPhysicalInterface, IPhysicalInterface
 from environmentSimulator import EnvironmentSimulator
 from dataRepository import DataRepository
+from comm import Message
 from utils import Coordinate, COORDINATE_CHANGE, Knowledge
 
 import random
@@ -64,10 +65,52 @@ def test_data_repository():
         c = d.find_target(a.position, Coordinate(0, 0))
 
 
+def test_message():
+    print(Message.coord_str(Coordinate(536, 0)))
+    assert Message.coord_str(Coordinate(536, 0)) == "536 0 "
+    print("passed Message.coord_str")
+
+    m = Message()
+    m.add_objective(Coordinate(3, 5), 2.0)
+    print(m.get_data())
+    assert m.get_data() == Message.BEGIN + "j3 5 2.0k" + Message.END
+    print("passed add_objective")
+
+    ov, cu = m.extract_objective_value(6)
+    print(ov, cu)
+    print(m.get_data()[cu])
+    assert ov == 2.0
+    assert m.get_data()[cu] == Message.OBJECTIVE_END
+    print("passed extract_objective_value")
+
+    m = Message()
+    m.add_obstacle(Coordinate(0, 6), Knowledge.YES)
+    print(m.get_data())
+    assert m.get_data() == Message.BEGIN + "s0 6 yt" + Message.END
+    print("passed add_obstacle")
+
+    co, cu = m.extract_coordinates(2)
+    print(co, cu)
+    assert co == Coordinate(0, 6)
+    assert m.get_data()[cu] == "y"
+    print("passed extract coordinate")
+
+    d = DataRepository(10, 10)
+    m.add_objective(Coordinate(6, 0), 7.0)
+    m.handle(d)
+    obs = d.get_obstacle(Coordinate(0, 6))
+    obj = d.get_objective(Coordinate(6, 0))
+    print(obs, obj)
+    assert obs == Knowledge.YES
+    assert obj == 7.0
+    print("passed handle")
+
+
 def main():
     # test_sim_physical_interface()
     # test_environment_simulator()
-    test_data_repository()
+    # test_data_repository()
+    test_message()
 
 
 if __name__ == "__main__":

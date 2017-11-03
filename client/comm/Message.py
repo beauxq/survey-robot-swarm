@@ -49,7 +49,7 @@ class Message:
     def extract_objective_value(self, cursor: int) -> (OBJECTIVE_TYPE, int):
         end = self._data.index(Message.OBJECTIVE_END, cursor)
         value = Message.OBJECTIVE_TYPE(self._data[cursor:end])
-        return value, end + 1
+        return value, end
 
     def add_objective(self, position: Coordinate, value):
         self._data += Message.OBJECTIVE + Message.coord_str(position) + str(value) + Message.OBJECTIVE_END
@@ -75,6 +75,7 @@ class Message:
 
                 # verify segment ending
                 assert self._data[cursor] == Message.OBSTACLE_END
+                cursor += 1
 
                 data.set_obstacle(coordinate, value)
 
@@ -85,6 +86,7 @@ class Message:
 
                 # verify segment ending
                 assert self._data[cursor] == Message.OBJECTIVE_END
+                cursor += 1
 
                 data.set_objective(coordinate, value)
             elif self._data[cursor] == Message.END:
