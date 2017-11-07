@@ -5,11 +5,11 @@ from utils import COORDINATE_CHANGE, Knowledge, Coordinate
 
 
 class Robot:
-    def __init__(self, map_width: int, map_height: int, home: Coordinate, seed: int):
+    def __init__(self, map_width: int, map_height: int, home: Coordinate, seed: int, robot_id: int):
         self.data = DataRepository(map_width, map_height)
         self.interface = SimPhysicalInterface(map_width, map_height, seed)
         self.home = home
-        self.communication = CommunicationManager(self.data)
+        self.communication = CommunicationManager(self.data, robot_id)
 
         self.interface.position = home
 
@@ -35,7 +35,8 @@ class Robot:
         self.communication.send_message(message)
 
     def go(self):
-        self.communication.run_all_threads()
+        self.communication.start_listen_thread()
+        self.communication.start_outgoing_thread()
 
         self.visit_current_space()  # home
 
@@ -53,8 +54,4 @@ class Robot:
                 self.visit_current_space()
 
             print(self.data.text_map(self.interface.position, self.interface.facing))
-            input()  # wait for enter key
-
-    def communication_run(self):
-        """this is the main control of the communication thread"""
-        print("running communication thread")
+            input()  # wait for enter key - TODO: timing

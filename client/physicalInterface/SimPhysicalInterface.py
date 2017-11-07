@@ -18,18 +18,18 @@ class SimPhysicalInterface(IPhysicalInterface):
             return
 
         self.position = target_coordinate
-        print("moved forward to", str(self.position))
+        # print("moved forward to", str(self.position))
 
     def rotate_left(self):
         self.facing = Direction((self.facing + 1) % 4)
-        print("turned left, now facing", self.facing)
+        # print("turned left, now facing", self.facing)
 
     def rotate_right(self):
         self.facing = Direction((self.facing - 1) % 4)
-        print("turned right, now facing", self.facing)
+        # print("turned right, now facing", self.facing)
 
     def turn(self, desired_direction: Direction):
-        print("about to turn: " + str(desired_direction))
+        # print("about to turn: " + str(desired_direction))
         if self.facing == desired_direction:
             pass  # don't evaluate elif expressions
         # not already facing the correct direction
@@ -41,7 +41,7 @@ class SimPhysicalInterface(IPhysicalInterface):
             # TODO:might there be a reason to alternate 2 lefts and 2 rights?
             self.rotate_left()
             self.rotate_left()
-        print("just turned: " + str(self.facing))
+        # print("just turned: " + str(self.facing))
 
     def read_sensor(self) -> int:
         return self.env.get(self.position).objective_value

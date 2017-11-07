@@ -90,24 +90,24 @@ class DataRepository:
         self._mutex.acquire()
 
         while len(path_queue):
-            print("going through path_queue, current length: " + str(len(path_queue)))
+            # print("going through path_queue, current length: " + str(len(path_queue)))
             current = path_queue.popleft()
-            print("popped: " + str(current))
+            # print("popped: " + str(current))
             if bfs_visited[current.coordinate]:
                 continue  # this one got visited while it was in queue
             # if we don't have a reading for this space yet, it is candidate for best target
             if self._get(current.coordinate).objective_value == Knowledge.UNKNOWN:
-                print("found unknown objective at: " + str(current.coordinate))
+                # print("found unknown objective at: " + str(current.coordinate))
                 if current.cost < best_target.cost:
                     best_target = current
             bfs_visited[current.coordinate] = True
             # look at all neighbors
             for direction in COORDINATE_CHANGE:
                 this_neighbor = current.coordinate + COORDINATE_CHANGE[direction]
-                print("looking " + str(direction) + " at: " + str(this_neighbor))
-                print("can travel: " + str(self._can_travel(this_neighbor)))
+                # print("looking " + str(direction) + " at: " + str(this_neighbor))
+                # print("can travel: " + str(self._can_travel(this_neighbor)))
                 if self._can_travel(this_neighbor) and not bfs_visited[this_neighbor]:
-                    print("can travel and not already visited: " + str(this_neighbor))
+                    # print("can travel and not already visited: " + str(this_neighbor))
                     # calculate cost
                     distance_to_home_change = this_neighbor.distance_to(home) - current.coordinate.distance_to(home)
                     cost = current.cost + DataRepository.TRAVEL_WEIGHT + distance_to_home_change
