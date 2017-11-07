@@ -1,4 +1,4 @@
-from pygame.time import delay
+from time import sleep
 
 from physicalInterface import SimPhysicalInterface, IPhysicalInterface
 from environmentSimulator import EnvironmentSimulator
@@ -120,7 +120,7 @@ def test_comm():
     c.start_listen_thread()
 
     c.send_message(Message())
-    delay(5000)
+    sleep(5)
     c.send_message(Message())
 
 

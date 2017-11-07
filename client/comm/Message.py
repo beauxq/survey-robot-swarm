@@ -8,6 +8,7 @@ class Message:
     # protocol
     # if we want to make any of these more than one character, handle will need to be changed
     BEGIN = "\t"
+    ACK = "a"
     OBJECTIVE = "j"
     OBJECTIVE_END = "k"
     OBSTACLE = "s"
@@ -29,6 +30,7 @@ class Message:
     _next_message_id = 1
 
     def __init__(self, incoming: str=None):
+        """ never call default constructor unless message will be sent """
         self._data = Message.BEGIN
         if incoming is None:
             self._write_header()
@@ -88,37 +90,65 @@ class Message:
     def get_data(self) -> str:
         return self._data + Message.END
 
-    def handle(self, data: DataRepository):
+    def extract_from_info(self) -> (int, int):
+        """ :returns robot id and message that the message is from
+            precondition: message is not an acknowledgement """
         self._cursor = 1
         robot_id = self.extract_number()
         message_id = self.extract_number()
+        return robot_id, message_id
+
+    def handle(self, data: DataRepository) -> (int, int):
+        """ :returns robot id and message id """
+        self._cursor = 1
+        robot_id, message_id = self.extract_from_info()
         print("robot id:", robot_id, "  message id:", message_id)
 
         while self._cursor < len(self._data):
             if self._data[self._cursor] == Message.OBSTACLE:
-                self._cursor += 1
-                coordinate = self.extract_coordinates()
-                value = Message.KNOWLEDGE.inv[self._data[self._cursor]]
-                self._cursor += 1
-
-                # verify segment ending
-                assert self._data[self._cursor] == Message.OBSTACLE_END
-                self._cursor += 1
-
-                data.set_obstacle(coordinate, value)
+                self.handle_obstacle(data)
 
             elif self._data[self._cursor] == Message.OBJECTIVE:
-                self._cursor += 1
-                coordinate = self.extract_coordinates()
-                value = self.extract_objective_value()
-
-                # verify segment ending
-                assert self._data[self._cursor] == Message.OBJECTIVE_END
-                self._cursor += 1
-
-                data.set_objective(coordinate, value)
+                self.handle_objective(data)
             elif self._data[self._cursor] == Message.END:
                 self._cursor += 1
             # TODO: robot movement
             else:
                 raise ValueError("bad message - data string: " + self._data + "  cursor: " + str(self._cursor))
+
+        return robot_id, message_id
+
+    def handle_objective(self, data):
+        self._cursor += 1
+        coordinate = self.extract_coordinates()
+        value = self.extract_objective_value()
+        # verify segment ending
+        assert self._data[self._cursor] == Message.OBJECTIVE_END
+        self._cursor += 1
+        data.set_objective(coordinate, value)
+
+    def handle_obstacle(self, data):
+        self._cursor += 1
+        coordinate = self.extract_coordinates()
+        value = Message.KNOWLEDGE.inv[self._data[self._cursor]]
+        self._cursor += 1
+        # verify segment ending
+        assert self._data[self._cursor] == Message.OBSTACLE_END
+        self._cursor += 1
+        data.set_obstacle(coordinate, value)
+
+    @staticmethod
+    def acknowledge(robot_id: int, message_id: int) -> str:
+        """ :returns a parameter to the constructor to make an acknowledgement """
+        return Message.BEGIN + Message.ACK + str(robot_id) + Message.SEPARATOR + str(message_id) + Message.SEPARATOR
+
+    def is_ack(self) -> (int, int):
+        """ :returns (0, 0) if not an acknowledgement
+            otherwise returns the robot id and message id that is being acknowledged """
+        if self._data[1] == Message.ACK:
+            self._cursor = 2
+            robot_id = self.extract_number()
+            message_id = self.extract_number()
+            return robot_id, message_id
+        else:
+            return 0, 0
