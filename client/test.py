@@ -1,7 +1,9 @@
+from pygame.time import delay
+
 from physicalInterface import SimPhysicalInterface, IPhysicalInterface
 from environmentSimulator import EnvironmentSimulator
 from dataRepository import DataRepository
-from comm import Message
+from comm import Message, CommunicationManager
 from utils import Coordinate, COORDINATE_CHANGE, Knowledge
 
 import random
@@ -70,29 +72,30 @@ def test_message():
     assert Message.coord_str(Coordinate(536, 0)) == "536 0 "
     print("passed Message.coord_str")
 
+    Message.set_my_robot_id(1)
+
     m = Message()
     m.add_objective(Coordinate(3, 5), 2.0)
     print(m.get_data())
-    assert m.get_data() == Message.BEGIN + "j3 5 2.0k" + Message.END
+    assert m.get_data() == Message.BEGIN + "1 1 j3 5 2.0k" + Message.END
     print("passed add_objective")
 
-    ov, cu = m.extract_objective_value(6)
-    print(ov, cu)
-    print(m.get_data()[cu])
+    m._cursor = 10
+    ov = m.extract_objective_value()
+    print(ov)
     assert ov == 2.0
-    assert m.get_data()[cu] == Message.OBJECTIVE_END
     print("passed extract_objective_value")
 
     m = Message()
     m.add_obstacle(Coordinate(0, 6), Knowledge.YES)
     print(m.get_data())
-    assert m.get_data() == Message.BEGIN + "s0 6 yt" + Message.END
+    assert m.get_data() == Message.BEGIN + "1 2 s0 6 yt" + Message.END
     print("passed add_obstacle")
 
-    co, cu = m.extract_coordinates(2)
-    print(co, cu)
+    m._cursor = 6
+    co = m.extract_coordinates()
+    print(co)
     assert co == Coordinate(0, 6)
-    assert m.get_data()[cu] == "y"
     print("passed extract coordinate")
 
     d = DataRepository(10, 10)
@@ -106,11 +109,27 @@ def test_message():
     print("passed handle")
 
 
+def test_comm():
+    d = DataRepository(10, 10)
+
+    # change broadcast address for testing
+    CommunicationManager.BROADCAST = "127.255.255.255"
+
+    c = CommunicationManager(d, "127.0.0.1")
+
+    c.start_listen_thread()
+
+    c.send_message(Message())
+    delay(5000)
+    c.send_message(Message())
+
+
 def main():
     # test_sim_physical_interface()
     # test_environment_simulator()
     # test_data_repository()
-    test_message()
+    # test_message()
+    test_comm()
 
 
 if __name__ == "__main__":

@@ -1,2 +1,2 @@
-from comm.CommunicationManager import CommunicationManager
 from comm.Message import Message
+from comm.CommunicationManager import CommunicationManager

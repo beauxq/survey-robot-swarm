@@ -4,6 +4,7 @@ from utils import Coordinate
 
 from queue import Queue
 import socket
+from threading import Thread
 
 
 class CommunicationManager:
@@ -13,7 +14,16 @@ class CommunicationManager:
 
     def __init__(self, data_repository: DataRepository, address: str):
         self._data = data_repository
-        self.address = address  # ip address for this robot
+        self._address = address  # ip address for this robot
+
+        # extract robot id from address
+        index = address.rfind(".") + 1
+        self._my_robot_id = int(address[index:])
+
+        # set that id for the Message class
+        Message.set_my_robot_id(self._my_robot_id)
+
+        self._listen_thread = Thread(target=self._receive_incoming_messages)
 
     """
         self._incoming_messages = Queue()  # TODO: parameter is max length, decide on a good one
@@ -26,8 +36,8 @@ class CommunicationManager:
     """
 
     def _receive_incoming_messages(self):
-        """ open listening socket and put messages in queue """
-        listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        """ open listening socket and handle messages """
+        listen_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             print("starting listening socket")
             listen_socket.bind((CommunicationManager.HOST, CommunicationManager.PORT))
@@ -37,23 +47,22 @@ class CommunicationManager:
         print("listening socket opened")
 
         while True:
-            listen_socket.listen()
-
-            connection, address = listen_socket.accept()  # this line blocks the thread until a connection comes
+            data, address = listen_socket.recvfrom(1024)
             print("incoming connection from", address)
 
-            if address != self.address:  # ignore if it's from me
-                data = connection.recv(1024)  # receive data from client
+            if address[0] != self._address:  # ignore if it's from me
                 string = bytes.decode(data)  # decode it to string
                 print("message:", string)
                 Message(string).handle(self._data)
 
-            connection.close()
+    def start_listen_thread(self):
+        self._listen_thread.start()
 
-    def send_message(self, message: Message):
+    @staticmethod
+    def send_message(message: Message):
         data = message.get_data().encode("utf-8")
         print("sending", data)
-        send_socket = socket.socket()
+        send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         send_socket.connect((CommunicationManager.BROADCAST, CommunicationManager.PORT))
         send_socket.sendall(data)
         send_socket.shutdown(socket.SHUT_WR)
