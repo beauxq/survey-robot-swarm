@@ -1,12 +1,16 @@
 #!/bin/bash
 
-if [[ $# -eq 0 ]] ; then
-    echo 'give robot number as argument'
-    exit 0
-fi
+# old command line argument code
+#if [[ $# -eq 0 ]] ; then
+#    echo 'give robot number as argument'
+#    exit 0
+#fi
 
 interface=$(ifconfig | grep -o wl.*: | cut -d':' -f 1)
 echo "found interface $interface"
+
+id=$(grep -o "robot_id = .*$" ../client/config.txt | cut -c12-)
+echo "found robot_id $id"
 
 service network-manager stop
 ip link set $interface down
@@ -17,10 +21,11 @@ iwconfig $interface essid geomars
 iwconfig $interface key 7654321098
 
 ip link set $interface up
-ip addr add 192.168.76.$1/24 dev $interface
+ip addr add 192.168.76.$id/24 dev $interface
 
-echo "192.168.76.$1 connected if you don't see any errors"
+echo "192.168.76.$id connected if you don't see any errors"
 echo "service network-manager start  to undo"
 
 echo "starting python main"
-python3 ../client/main.py
+cd ../client
+python3 main.py

@@ -122,7 +122,7 @@ class CommunicationManager:
                 timer = time.time()
 
             # send messages from outgoing queue
-            print("about to pull a message from queue")
+            # print("about to pull a message from queue")
             try:
                 message = self._unacknowledged_messages.get(timeout=CommunicationManager.ACK_INTERVAL)
                 this_message_id = message.extract_from_info()[1]
