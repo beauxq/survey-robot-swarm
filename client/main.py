@@ -10,8 +10,7 @@ DEMO_OPTIONS = {
         "height": 15,
         "home_x": 0,
         "home_y": 0,
-        "seed": 82,
-        # seed 79 debug message failure 1, 1 to 2
+        "seed": 87,
         "robot_id": 1,
         "robot_count": 2
     },
@@ -20,7 +19,8 @@ DEMO_OPTIONS = {
         "height": 15,
         "home_x": 19,
         "home_y": 14,
-        "seed": 82,
+        "seed": 87,
+        # 86 bl trp
         "robot_id": 2,
         "robot_count": 2
     }

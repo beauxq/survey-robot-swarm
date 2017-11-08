@@ -59,4 +59,4 @@ class Robot:
 
             print(self.data.text_map(self.interface.position, self.interface.facing))
             # input()  # wait for enter key - TODO: timing
-            sleep(1)
+            sleep(0.5)

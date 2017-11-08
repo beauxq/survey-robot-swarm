@@ -84,17 +84,21 @@ class CommunicationManager:
                     # else ignore it (not for me)
 
                 else:  # not an acknowledgement
+                    acknowledge_this = False
                     try:
                         robot_id, message_id = message.extract_from_info()
+
                         if message_id == self._highest_acknowledge_to[robot_id] + 1:
                             message.handle(self._data)
+                            acknowledge_this = True  # if handle raises exception, this line won't run
                         # else  it's either already handled or one was skipped, so ignore it
                     except ValueError as e:
                         print("handle message failed:", e)
                         robot_id = 0
                         message_id = 0
-                    if robot_id:
+                    if acknowledge_this:
                         # outgoing thread will make acknowledgement and send it
+                        # TODO: do we need a mutex around this and outgoing thread iteration?
                         self._highest_acknowledge_to[robot_id] = message_id
 
     def start_listen_thread(self):
