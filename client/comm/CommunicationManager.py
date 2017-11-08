@@ -126,8 +126,8 @@ class CommunicationManager:
             try:
                 message = self._unacknowledged_messages.get(timeout=CommunicationManager.ACK_INTERVAL)
                 this_message_id = message.extract_from_info()[1]
-                print("pulled from queue", this_message_id)
-                # has this id been acknowledged by everyone?
+                # print("pulled from queue", this_message_id)
+                # check has this id been acknowledged by everyone?
                 acknowledged = True
                 for message_id in self._highest_acknowledge_from.values():
                     if message_id < this_message_id:
@@ -140,6 +140,7 @@ class CommunicationManager:
                     self._unacknowledged_messages.put(message)
                 # else this message has been acknowledged by everyone, so drop it
                 else:  # debugging
-                    print(this_message_id, "acknowledged, so dropping")
+                    # print(this_message_id, "acknowledged, so dropping")
+                    pass
             except Empty:
                 pass

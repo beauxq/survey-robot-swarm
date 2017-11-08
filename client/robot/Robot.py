@@ -3,6 +3,8 @@ from physicalInterface import SimPhysicalInterface
 from comm import CommunicationManager, Message
 from utils import COORDINATE_CHANGE, Knowledge, Coordinate
 
+from time import sleep
+
 
 class Robot:
     def __init__(self, map_width: int, map_height: int, home: Coordinate, seed: int, robot_id: int, robot_count: int):
@@ -36,7 +38,9 @@ class Robot:
 
     def go(self):
         self.communication.start_listen_thread()
+        sleep(0.5)
         self.communication.start_outgoing_thread()
+        sleep(0.5)
 
         self.visit_current_space()  # home
 
