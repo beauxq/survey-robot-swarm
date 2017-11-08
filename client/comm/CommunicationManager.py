@@ -5,7 +5,6 @@ from queue import Queue, Empty
 import socket
 from threading import Thread
 import time
-from collections import defaultdict
 
 
 class CommunicationManager:
@@ -16,14 +15,18 @@ class CommunicationManager:
 
     ACK_INTERVAL = 0.5  # second acknowledgements every this many seconds
 
-    def __init__(self, data_repository: DataRepository, robot_id: int):
+    def __init__(self, data_repository: DataRepository, robot_id: int, robot_count: int):
         self._data = data_repository
         self._address = CommunicationManager.ADDRESS_PREFIX + str(robot_id)  # ip address for this robot
 
         self._unacknowledged_messages = Queue()  # TODO: parameter is max length, decide on a good one
-        self._highest_acknowledge_from = defaultdict(int)  # this key robot has received all my messages up to value
-        self._highest_acknowledge_to = defaultdict(int)  # received from key robot all messages up to this value
-        # TODO: these dictionaries need to know how many robots there are before the threads start (not defaultdict)
+        self._highest_acknowledge_from = dict()  # this key robot has received all my messages up to value
+        self._highest_acknowledge_to = dict()  # received from key robot all messages up to this value
+        # initialize acknowledgement dictionaries
+        for i in range(1, robot_count+1):
+            if i != robot_id:
+                self._highest_acknowledge_from[i] = 0
+                self._highest_acknowledge_to[i] = 0
 
         self._my_robot_id = robot_id
 
@@ -115,7 +118,7 @@ class CommunicationManager:
                 # send all acknowledgements
                 for robot_id, message_id in self._highest_acknowledge_to.items():
                     ack = Message(Message.acknowledge(robot_id, message_id))
-                    CommunicationManager.send_message(ack)
+                    CommunicationManager._send_message(ack)
                 timer = time.time()
 
             # send messages from outgoing queue
@@ -133,7 +136,7 @@ class CommunicationManager:
                     if this_message_id < previous_message_id:
                         time.sleep(CommunicationManager.ACK_INTERVAL)
                     previous_message_id = this_message_id
-                    CommunicationManager.send_message(message)
+                    CommunicationManager._send_message(message)
                     self._unacknowledged_messages.put(message)
                 # else this message has been acknowledged by everyone, so drop it
                 else:  # debugging

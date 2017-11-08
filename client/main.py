@@ -1,34 +1,42 @@
 from robot import Robot
 from utils import Coordinate
 
-import sys
 
+def get_configuration() -> dict:
+    with open("config.txt") as file:
 
-ARG_LIST = "width height home_x home_y seed robot_id"
+        # defaults
+        options = {
+            "width": 10,
+            "height": 10,
+            "home_x": 0,
+            "home_y": 0,
+            "seed": 76,
+            "robot_id": 1,
+            "robot_count": 2
+        }
+
+        # read non-defaults from configuration file
+        for line in file:
+            words = line.split(" ")
+            if len(words) == 3 and words[1] == "=":
+                try:
+                    options[words[0]] = int(words[2])
+                except ValueError:
+                    print("warning: discarding non-integer found for a configuration value -", line)
+
+    return options
 
 
 def main():
-    width = 10
-    height = 10
-    home_x = 0
-    home_y = 0
-    seed = 76
-    robot_id = 1
-    try:
-        width = int(sys.argv[1])
-        height = int(sys.argv[2])
-        home_x = int(sys.argv[3])
-        home_y = int(sys.argv[4])
-        seed = int(sys.argv[5])
-        robot_id = int(sys.argv[6])
-    except IndexError:
-        print("need 6 arguments:", ARG_LIST)
-        exit(1)
-    except ValueError:
-        print("all arguments should be integers:", ARG_LIST)
-        exit(1)
+    options = get_configuration()
 
-    robot = Robot(width, height, Coordinate(home_x, home_y), seed, robot_id)
+    robot = Robot(options["width"],
+                  options["height"],
+                  Coordinate(options["home_x"], options["home_y"]),
+                  options["seed"],
+                  options["robot_id"],
+                  options["robot_count"])
     robot.go()
 
 

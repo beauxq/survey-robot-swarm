@@ -5,11 +5,11 @@ from utils import COORDINATE_CHANGE, Knowledge, Coordinate
 
 
 class Robot:
-    def __init__(self, map_width: int, map_height: int, home: Coordinate, seed: int, robot_id: int):
+    def __init__(self, map_width: int, map_height: int, home: Coordinate, seed: int, robot_id: int, robot_count: int):
         self.data = DataRepository(map_width, map_height)
         self.interface = SimPhysicalInterface(map_width, map_height, seed)
         self.home = home
-        self.communication = CommunicationManager(self.data, robot_id)
+        self.communication = CommunicationManager(self.data, robot_id, robot_count)
 
         self.interface.position = home
 

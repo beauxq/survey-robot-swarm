@@ -23,4 +23,4 @@ echo "192.168.76.$1 connected if you don't see any errors"
 echo "service network-manager start  to undo"
 
 echo "starting python main"
-python3 ../client/main.py 10 10 0 0 76 $1
+python3 ../client/main.py

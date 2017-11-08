@@ -1,0 +1,7 @@
+width = 10
+height = 10
+home_x = 0
+home_y = 0
+seed = 76
+robot_id = 1
+robot_count = 2
