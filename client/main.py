@@ -1,6 +1,31 @@
 from robot import Robot
 from utils import Coordinate
 
+import sys
+
+
+DEMO_OPTIONS = {
+    "1": {
+        "width": 20,
+        "height": 15,
+        "home_x": 0,
+        "home_y": 0,
+        "seed": 82,
+        # seed 79 debug message failure 1, 1 to 2
+        "robot_id": 1,
+        "robot_count": 2
+    },
+    "2": {
+        "width": 20,
+        "height": 15,
+        "home_x": 19,
+        "home_y": 14,
+        "seed": 82,
+        "robot_id": 2,
+        "robot_count": 2
+    }
+}
+
 
 def get_configuration() -> dict:
     with open("config.txt") as file:
@@ -29,7 +54,11 @@ def get_configuration() -> dict:
 
 
 def main():
+    # 2 robot on 1 computer demo
+    demo = (len(sys.argv) > 1)
     options = get_configuration()
+    if demo:
+        options = DEMO_OPTIONS[sys.argv[1]]
 
     robot = Robot(options["width"],
                   options["height"],
@@ -37,6 +66,13 @@ def main():
                   options["seed"],
                   options["robot_id"],
                   options["robot_count"])
+    # for single computer demo
+    if demo:
+        if sys.argv[1] == "1":
+            robot.communication.__class__.SEND_PORT = 7677
+        else:  # should be "2"
+            robot.communication.__class__.LISTEN_PORT = 7677
+        robot.communication.__class__.BROADCAST = "127.255.255.255"
     robot.go()
 
 

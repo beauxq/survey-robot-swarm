@@ -102,7 +102,7 @@ class Message:
         """ :returns robot id and message id """
         self._cursor = 1
         robot_id, message_id = self.extract_from_info()
-        print("robot id:", robot_id, "  message id:", message_id)
+        # print("handling robot id:", robot_id, "  message id:", message_id)
 
         while self._cursor < len(self._data):
             if self._data[self._cursor] == Message.OBSTACLE:
@@ -138,17 +138,31 @@ class Message:
         data.set_obstacle(coordinate, value)
 
     @staticmethod
-    def acknowledge(robot_id: int, message_id: int) -> str:
-        """ :returns a parameter to the constructor to make an acknowledgement """
-        return Message.BEGIN + Message.ACK + str(robot_id) + Message.SEPARATOR + str(message_id) + Message.SEPARATOR
+    def acknowledge(acknowledgee_robot_id: int, message_id: int) -> str:
+        """ :returns a parameter to the constructor to make an acknowledgement
+            acknowledgement format is:
+            BEGIN + acknowledger + SEPARATOR + ACK + acknowledgee + SEPARATOR + message_id + SEPARATOR + END """
+        return (Message.BEGIN + str(Message._my_robot_id) + Message.SEPARATOR +
+                Message.ACK + str(acknowledgee_robot_id) + Message.SEPARATOR + str(message_id) + Message.SEPARATOR)
 
-    def is_ack(self) -> (int, int):
-        """ :returns (0, 0) if not an acknowledgement
+    def is_ack(self) -> bool:
+        """ :returns False if not an acknowledgement
             otherwise returns the robot id and message id that is being acknowledged """
-        if self._data[1] == Message.ACK:
-            self._cursor = 2
-            robot_id = self.extract_number()
-            message_id = self.extract_number()
-            return robot_id, message_id
-        else:
-            return 0, 0
+        self._cursor = 1
+        self.extract_number()  # sender/acknowledger
+        return self._data[self._cursor] == Message.ACK
+
+    def get_ack_info(self) -> (int, int):
+        """ :returns the robot id and message id that is being acknowledged
+            precondition: is ack """
+        self._cursor = 1
+        self.extract_number()  # sender/acknowledger
+        assert self._data[self._cursor] == Message.ACK  # precondition
+        self._cursor += 1
+        robot_id = self.extract_number()
+        message_id = self.extract_number()
+        return robot_id, message_id
+
+    def get_sender(self) -> int:
+        self._cursor = 1
+        return self.extract_number()

@@ -9,15 +9,16 @@ import time
 
 class CommunicationManager:
     HOST = ""  # all available interfaces
-    PORT = 7676
+    LISTEN_PORT = 7676
+    SEND_PORT = 7676  # so we can have 2 robots on the same computer
     BROADCAST = "192.168.76.255"
-    ADDRESS_PREFIX = "192.168.76."
+    # ADDRESS_PREFIX = "192.168.76."
 
     ACK_INTERVAL = 0.5  # second acknowledgements every this many seconds
 
     def __init__(self, data_repository: DataRepository, robot_id: int, robot_count: int):
         self._data = data_repository
-        self._address = CommunicationManager.ADDRESS_PREFIX + str(robot_id)  # ip address for this robot
+        # self._address = CommunicationManager.ADDRESS_PREFIX + str(robot_id)  # ip address for this robot
 
         self._unacknowledged_messages = Queue()  # TODO: parameter is max length, decide on a good one
         self._highest_acknowledge_from = dict()  # this key robot has received all my messages up to value
@@ -36,11 +37,13 @@ class CommunicationManager:
         self._listen_thread = Thread(target=self._receive_incoming_messages)
         self._send_thread = Thread(target=self._outgoing_thread)
 
+    """
     @staticmethod
     def extract_robot_id_from_address(address: str) -> int:
-        """ the robot id is the last number of the ip address """
+        "" the robot id is the last number of the ip address ""
         index = address.rfind(".") + 1
         return int(address[index:])
+    """
 
     def _receive_incoming_messages(self):
         """ thread function
@@ -48,25 +51,32 @@ class CommunicationManager:
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             print("starting listening socket")
-            listen_socket.bind((CommunicationManager.HOST, CommunicationManager.PORT))
+            listen_socket.bind((CommunicationManager.HOST, CommunicationManager.LISTEN_PORT))
         except Exception as e:
             print("unable to start listening socket", e)
+            print("tried HOST:", CommunicationManager.HOST, " PORT:", CommunicationManager.LISTEN_PORT)
             return
         print("listening socket opened")
 
         while True:
             data, address = listen_socket.recvfrom(1024)
-            from_robot_id = CommunicationManager.extract_robot_id_from_address(address[0])
-            print("incoming connection from robot", from_robot_id)
+            string = bytes.decode(data)  # decode it to string
+            message = Message(string)
+            from_robot_id = message.get_sender()
+
+            # debug
+            # if not message.is_ack():
+            #     print("incoming connection from", address[0], " robot", from_robot_id)
 
             if from_robot_id != self._my_robot_id:  # ignore if it's from me
-                string = bytes.decode(data)  # decode it to string
-                message = Message(string)
-                print("message:", message.get_data())
+                # debug
+                # if not message.is_ack():
+                #     print("message:", message.get_data())
 
                 # check to see if it's an acknowledgement
-                robot_id, message_id = message.is_ack()
-                if robot_id:
+                if message.is_ack():
+                    robot_id, message_id = message.get_ack_info()
+
                     # check to see if it's an acknowledgement TO ME
                     if robot_id == self._my_robot_id:
                         self._highest_acknowledge_from[from_robot_id] = \
@@ -97,10 +107,11 @@ class CommunicationManager:
     def _send_message(message: Message):
         """ outgoing thread calls this to send messages """
         data = message.get_data().encode("utf-8")
-        print("sending", data)
+        # if not message.is_ack():
+        #     print("sending", data)
         send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         send_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        send_socket.connect((CommunicationManager.BROADCAST, CommunicationManager.PORT))
+        send_socket.connect((CommunicationManager.BROADCAST, CommunicationManager.SEND_PORT))
         send_socket.sendall(data)
         send_socket.shutdown(socket.SHUT_WR)
         send_socket.close()
@@ -133,7 +144,7 @@ class CommunicationManager:
                     if message_id < this_message_id:
                         acknowledged = False
                 if not acknowledged:
-                    if this_message_id < previous_message_id:
+                    if this_message_id <= previous_message_id:
                         time.sleep(CommunicationManager.ACK_INTERVAL)
                     previous_message_id = this_message_id
                     CommunicationManager._send_message(message)

@@ -58,4 +58,5 @@ class Robot:
                 self.visit_current_space()
 
             print(self.data.text_map(self.interface.position, self.interface.facing))
-            input()  # wait for enter key - TODO: timing
+            # input()  # wait for enter key - TODO: timing
+            sleep(1)
