@@ -6,7 +6,7 @@
 #    exit 0
 #fi
 
-interface=$(ifconfig | grep -o wl.*: | cut -d':' -f 1)
+interface=$(ls /sys/class/net | grep -o wl.*)
 echo "found interface $interface"
 
 id=$(grep -o "robot_id = .*$" ../client/config.txt | cut -c12-)
