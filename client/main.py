@@ -5,6 +5,16 @@ import sys
 
 
 DEMO_OPTIONS = {
+    "0": {
+        "width": 20,
+        "height": 15,
+        "home_x": 0,
+        "home_y": 0,
+        # 87 good for presentation
+        "seed": 87,
+        "robot_id": 1,
+        "robot_count": 1
+    },
     "1": {
         "width": 20,
         "height": 15,
@@ -73,7 +83,7 @@ def main():
         else:  # should be "2"
             robot.communication.__class__.LISTEN_PORT = 7677
         robot.communication.__class__.BROADCAST = "127.255.255.255"
-    robot.go()
+    print("done time:", robot.go())
 
 
 if __name__ == "__main__":

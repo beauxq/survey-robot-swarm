@@ -15,12 +15,17 @@ class Robot:
 
         self.interface.position = home
 
-    def visit_current_space(self):
+    def visit_current_space(self) -> float:
+        """ :returns time taken """
+        total_time = 0
+
         message = Message()
 
         # objective reading
         already_have = self.data.get_objective(self.interface.position) != Knowledge.UNKNOWN
-        self.data.set_objective(self.interface.position, self.interface.read_sensor())
+        data, time_taken = self.interface.read_sensor()
+        total_time += time_taken
+        self.data.set_objective(self.interface.position, data)
         if not already_have:
             message.add_objective(self.interface.position, self.data.get_objective(self.interface.position))
 
@@ -29,34 +34,52 @@ class Robot:
             looking_at = self.interface.position + COORDINATE_CHANGE[direction]
             if not self.data.out_of_bounds(looking_at):
                 previous = self.data.get_obstacle(looking_at)
-                new = Knowledge.YES if self.interface.see_obstacles(direction) else Knowledge.NO
+                obstacle_reading, time_taken = self.interface.see_obstacles(direction)
+                total_time += time_taken
+                new = Knowledge.YES if obstacle_reading else Knowledge.NO
                 if new != previous:
                     self.data.set_obstacle(looking_at, new)
                     message.add_obstacle(looking_at, new)
 
         self.communication.send_message(message)
+        return total_time
 
-    def go(self):
+    def go(self) -> float:
+        """ :returns total time taken """
         self.communication.start_listen_thread()
         sleep(0.5)
         self.communication.start_outgoing_thread()
         sleep(0.5)
 
-        self.visit_current_space()  # home
+        count_home_target = 0
 
-        while True:
+        total_time = 0
+
+        total_time += self.visit_current_space()  # home
+
+        while count_home_target < 100:
             target = self.data.find_target(self.interface.position, self.home)
-
             print("target:", target)
+            if target == self.home:
+                count_home_target += 1
+            else:
+                count_home_target = 0
 
             path_to_target = self.data.find_path(self.interface.position, target)
             print("path:", path_to_target)
             if len(path_to_target) > 0:
                 # TODO: get permission from communication thread to make this move
-                self.interface.turn(path_to_target[0])
-                self.interface.forward()
-                self.visit_current_space()
+                total_time += self.interface.turn(path_to_target[0])
+                total_time += self.interface.forward()
+                total_time += self.visit_current_space()
 
             print(self.data.text_map(self.interface.position, self.interface.facing))
+            print("total time:", total_time)
             # input()  # wait for enter key - TODO: timing
-            sleep(0.5)
+            # sleep(0.5)
+
+        # exit while loop when targeted home 100 times
+        self.communication.stop_outgoing_thread()
+        self.communication.stop_listen_thread()
+
+        return total_time

@@ -3,7 +3,7 @@ from comm import Message
 
 from queue import Queue, Empty
 import socket
-from threading import Thread
+from threading import Thread, Event
 import time
 
 
@@ -35,7 +35,9 @@ class CommunicationManager:
         Message.set_my_robot_id(self._my_robot_id)
 
         self._listen_thread = Thread(target=self._receive_incoming_messages)
+        self._stop_listen = Event()
         self._send_thread = Thread(target=self._outgoing_thread)
+        self._stop_send = Event()
 
     """
     @staticmethod
@@ -58,7 +60,7 @@ class CommunicationManager:
             return
         print("listening socket opened")
 
-        while True:
+        while not self._stop_listen.is_set():
             data, address = listen_socket.recvfrom(1024)
             string = bytes.decode(data)  # decode it to string
             message = Message(string)
@@ -107,6 +109,19 @@ class CommunicationManager:
     def start_outgoing_thread(self):
         self._send_thread.start()
 
+    def stop_outgoing_thread(self):
+        self._stop_send.set()
+        self._send_thread.join()
+
+    def stop_listen_thread(self):
+        self._stop_listen.set()
+        # send a nothing message to myself to stop receive from blocking
+        temp_save_send_port = CommunicationManager.SEND_PORT
+        CommunicationManager.SEND_PORT = CommunicationManager.LISTEN_PORT
+        self._send_message(Message(Message.acknowledge(self._my_robot_id, 0)))
+        CommunicationManager.SEND_PORT = temp_save_send_port
+        self._listen_thread.join()
+
     @staticmethod
     def _send_message(message: Message):
         """ outgoing thread calls this to send messages """
@@ -126,7 +141,7 @@ class CommunicationManager:
     def _outgoing_thread(self):
         previous_message_id = 0  # used to put a delay between repeating sends of the same message
         timer = time.time()
-        while True:
+        while not self._stop_send.is_set():
 
             if time.time() - CommunicationManager.ACK_INTERVAL > timer:
                 # print("sending acknowledgements:", [v for v in self._highest_acknowledge_to.values()])
