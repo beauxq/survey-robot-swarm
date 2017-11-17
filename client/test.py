@@ -4,7 +4,7 @@ from physicalInterface import SimPhysicalInterface, IPhysicalInterface
 from environmentSimulator import EnvironmentSimulator
 from dataRepository import DataRepository
 from comm import Message, CommunicationManager
-from utils import Coordinate, COORDINATE_CHANGE, Knowledge
+from utils import Coordinate, COORDINATE_CHANGE, Knowledge, get_jenks_breaks
 
 import random
 
@@ -115,7 +115,7 @@ def test_comm():
     # change broadcast address for testing
     CommunicationManager.BROADCAST = "127.255.255.255"
 
-    c = CommunicationManager(d, "127.0.0.1")
+    c = CommunicationManager(d, 1, 1)
 
     c.start_listen_thread()
 
@@ -124,12 +124,19 @@ def test_comm():
     c.send_message(Message())
 
 
+def test_jenks():
+    a = [1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3,
+         7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 28]
+    print(get_jenks_breaks(a, 2))
+
+
 def main():
     # test_sim_physical_interface()
     # test_environment_simulator()
     # test_data_repository()
     # test_message()
-    test_comm()
+    # test_comm()
+    test_jenks()
 
 
 if __name__ == "__main__":

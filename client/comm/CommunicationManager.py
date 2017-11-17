@@ -9,8 +9,8 @@ import time
 
 class CommunicationManager:
     HOST = ""  # all available interfaces
-    LISTEN_PORT = 7676
-    SEND_PORT = 7676  # so we can have 2 robots on the same computer
+    DEFAULT_PORT = 7676
+    # SEND_PORT = 7676  # so we can have 2 robots on the same computer
     BROADCAST = "192.168.76.255"
     # ADDRESS_PREFIX = "192.168.76."
 
@@ -19,6 +19,9 @@ class CommunicationManager:
     def __init__(self, data_repository: DataRepository, robot_id: int, robot_count: int):
         self._data = data_repository
         # self._address = CommunicationManager.ADDRESS_PREFIX + str(robot_id)  # ip address for this robot
+
+        self.listen_port = CommunicationManager.DEFAULT_PORT
+        self.send_port = CommunicationManager.DEFAULT_PORT
 
         self._unacknowledged_messages = Queue()  # TODO: parameter is max length, decide on a good one
         self._highest_acknowledge_from = dict()  # this key robot has received all my messages up to value
@@ -53,10 +56,10 @@ class CommunicationManager:
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             print("starting listening socket")
-            listen_socket.bind((CommunicationManager.HOST, CommunicationManager.LISTEN_PORT))
+            listen_socket.bind((CommunicationManager.HOST, self.listen_port))
         except Exception as e:
             print("unable to start listening socket", e)
-            print("tried HOST:", CommunicationManager.HOST, " PORT:", CommunicationManager.LISTEN_PORT)
+            print("tried HOST:", CommunicationManager.HOST, " PORT:", self.listen_port)
             return
         print("listening socket opened")
 
@@ -116,21 +119,20 @@ class CommunicationManager:
     def stop_listen_thread(self):
         self._stop_listen.set()
         # send a nothing message to myself to stop receive from blocking
-        temp_save_send_port = CommunicationManager.SEND_PORT
-        CommunicationManager.SEND_PORT = CommunicationManager.LISTEN_PORT
+        temp_save_send_port = self.send_port
+        self.send_port = self.listen_port
         self._send_message(Message(Message.acknowledge(self._my_robot_id, 0)))
-        CommunicationManager.SEND_PORT = temp_save_send_port
+        self.send_port = temp_save_send_port
         self._listen_thread.join()
 
-    @staticmethod
-    def _send_message(message: Message):
+    def _send_message(self, message: Message):
         """ outgoing thread calls this to send messages """
         data = message.get_data().encode("utf-8")
         # if not message.is_ack():
         #     print("sending", data)
         send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         send_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        send_socket.connect((CommunicationManager.BROADCAST, CommunicationManager.SEND_PORT))
+        send_socket.connect((CommunicationManager.BROADCAST, self.send_port))
         send_socket.sendall(data)
         send_socket.shutdown(socket.SHUT_WR)
         send_socket.close()
@@ -148,7 +150,7 @@ class CommunicationManager:
                 # send all acknowledgements
                 for robot_id, message_id in self._highest_acknowledge_to.items():
                     ack = Message(Message.acknowledge(robot_id, message_id))
-                    CommunicationManager._send_message(ack)
+                    self._send_message(ack)
                 timer = time.time()
 
             # send messages from outgoing queue
@@ -166,7 +168,7 @@ class CommunicationManager:
                     if this_message_id <= previous_message_id:
                         time.sleep(CommunicationManager.ACK_INTERVAL)
                     previous_message_id = this_message_id
-                    CommunicationManager._send_message(message)
+                    self._send_message(message)
                     self._unacknowledged_messages.put(message)
                 # else this message has been acknowledged by everyone, so drop it
                 else:  # debugging
