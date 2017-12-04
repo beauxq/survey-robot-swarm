@@ -26,29 +26,26 @@ class Message:
     # and must not have OBJECTIVE_END in any str representation
     OBJECTIVE_TYPE = float
 
-    _my_robot_id = 0
-    _next_message_id = 1
+    # _my_robot_id = 0
+    # _next_message_id = 1
 
-    def __init__(self, incoming: str=None):
-        """ never call default constructor unless message will be sent """
+    def __init__(self, communication,  incoming: str=None):
+        """ never call with incoming None unless message will be sent """
         self._data = Message.BEGIN
         if incoming is None:
-            self._write_header()
+            self._write_header(communication)
         else:
             self._data = incoming
 
         self._cursor = 0
 
-    def _write_header(self):
-        if Message._my_robot_id == 0:
+    def _write_header(self, communication):
+        if communication.get_my_robot_id() == 0:
             raise ValueError("robot id needs to be set before creating new messages - Message.set_my_robot_id(n)")
-        self._data = Message.BEGIN + str(Message._my_robot_id) + Message.SEPARATOR + \
-                     str(Message._next_message_id) + Message.SEPARATOR
-        Message._next_message_id += 1
-
-    @staticmethod
-    def set_my_robot_id(robot_id: int):
-        Message._my_robot_id = robot_id
+        self._data = Message.BEGIN + str(communication.get_my_robot_id()) + Message.SEPARATOR + \
+            str(communication.get_next_message_id()) + Message.SEPARATOR
+        communication.increment_next_message_id()
+        # print("just wrote header, next message id:", communication.get_next_message_id())
 
     @staticmethod
     def coord_str(coordinate: Coordinate) -> str:
@@ -138,11 +135,11 @@ class Message:
         data.set_obstacle(coordinate, value)
 
     @staticmethod
-    def acknowledge(acknowledgee_robot_id: int, message_id: int) -> str:
+    def acknowledge(acknowledger_robot_id: int, acknowledgee_robot_id: int, message_id: int) -> str:
         """ :returns a parameter to the constructor to make an acknowledgement
             acknowledgement format is:
             BEGIN + acknowledger + SEPARATOR + ACK + acknowledgee + SEPARATOR + message_id + SEPARATOR + END """
-        return (Message.BEGIN + str(Message._my_robot_id) + Message.SEPARATOR +
+        return (Message.BEGIN + str(acknowledger_robot_id) + Message.SEPARATOR +
                 Message.ACK + str(acknowledgee_robot_id) + Message.SEPARATOR + str(message_id) + Message.SEPARATOR)
 
     def is_ack(self) -> bool:

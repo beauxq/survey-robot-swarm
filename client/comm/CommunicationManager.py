@@ -11,7 +11,7 @@ class CommunicationManager:
     HOST = ""  # all available interfaces
     DEFAULT_PORT = 7676
     # SEND_PORT = 7676  # so we can have 2 robots on the same computer
-    BROADCAST = "192.168.76.255"
+    DEFAULT_BROADCAST = "192.168.76.255"
     # ADDRESS_PREFIX = "192.168.76."
 
     ACK_INTERVAL = 0.5  # second acknowledgements every this many seconds
@@ -22,6 +22,7 @@ class CommunicationManager:
 
         self.listen_port = CommunicationManager.DEFAULT_PORT
         self.send_port = CommunicationManager.DEFAULT_PORT
+        self.broadcast = CommunicationManager.DEFAULT_BROADCAST
 
         self._unacknowledged_messages = Queue()  # TODO: parameter is max length, decide on a good one
         self._highest_acknowledge_from = dict()  # this key robot has received all my messages up to value
@@ -33,9 +34,7 @@ class CommunicationManager:
                 self._highest_acknowledge_to[i] = 0
 
         self._my_robot_id = robot_id
-
-        # set that id for the Message class
-        Message.set_my_robot_id(self._my_robot_id)
+        self._next_message_id = 1
 
         self._listen_thread = Thread(target=self._receive_incoming_messages)
         self._stop_listen = Event()
@@ -49,6 +48,15 @@ class CommunicationManager:
         index = address.rfind(".") + 1
         return int(address[index:])
     """
+
+    def get_my_robot_id(self):
+        return self._my_robot_id
+
+    def get_next_message_id(self):
+        return self._next_message_id
+
+    def increment_next_message_id(self):
+        self._next_message_id += 1
 
     def _receive_incoming_messages(self):
         """ thread function
@@ -66,7 +74,7 @@ class CommunicationManager:
         while not self._stop_listen.is_set():
             data, address = listen_socket.recvfrom(1024)
             string = bytes.decode(data)  # decode it to string
-            message = Message(string)
+            message = Message(self, string)
             from_robot_id = message.get_sender()
 
             # debug
@@ -92,8 +100,9 @@ class CommunicationManager:
                     acknowledge_this = False
                     try:
                         robot_id, message_id = message.extract_from_info()
-
+                        # print("checking message id", message_id)
                         if message_id == self._highest_acknowledge_to[robot_id] + 1:
+                            # print("handling", message_id)
                             message.handle(self._data)
                             acknowledge_this = True  # if handle raises exception, this line won't run
                         # else  it's either already handled or one was skipped, so ignore it
@@ -121,7 +130,7 @@ class CommunicationManager:
         # send a nothing message to myself to stop receive from blocking
         temp_save_send_port = self.send_port
         self.send_port = self.listen_port
-        self._send_message(Message(Message.acknowledge(self._my_robot_id, 0)))
+        self._send_message(Message(self, Message.acknowledge(self._my_robot_id, self._my_robot_id, 0)))
         self.send_port = temp_save_send_port
         self._listen_thread.join()
 
@@ -132,12 +141,13 @@ class CommunicationManager:
         #     print("sending", data)
         send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         send_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        send_socket.connect((CommunicationManager.BROADCAST, self.send_port))
+        send_socket.connect((self.broadcast, self.send_port))
         send_socket.sendall(data)
         send_socket.shutdown(socket.SHUT_WR)
         send_socket.close()
 
     def send_message(self, message: Message):
+        # print("putting in queue:", message.extract_from_info()[1])
         self._unacknowledged_messages.put(message)
 
     def _outgoing_thread(self):
@@ -145,11 +155,12 @@ class CommunicationManager:
         timer = time.time()
         while not self._stop_send.is_set():
 
+            # print(" ------------------------------------------------ checking ack interval")
             if time.time() - CommunicationManager.ACK_INTERVAL > timer:
                 # print("sending acknowledgements:", [v for v in self._highest_acknowledge_to.values()])
                 # send all acknowledgements
                 for robot_id, message_id in self._highest_acknowledge_to.items():
-                    ack = Message(Message.acknowledge(robot_id, message_id))
+                    ack = Message(self, Message.acknowledge(self._my_robot_id, robot_id, message_id))
                     self._send_message(ack)
                 timer = time.time()
 
@@ -175,4 +186,5 @@ class CommunicationManager:
                     # print(this_message_id, "acknowledged, so dropping")
                     pass
             except Empty:
+                # print("queue empty")
                 pass

@@ -113,7 +113,7 @@ def test_comm():
     d = DataRepository(10, 10)
 
     # change broadcast address for testing
-    CommunicationManager.BROADCAST = "127.255.255.255"
+    CommunicationManager.DEFAULT_BROADCAST = "127.255.255.255"
 
     c = CommunicationManager(d, 1, 1)
 

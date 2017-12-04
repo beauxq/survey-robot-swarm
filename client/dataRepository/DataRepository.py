@@ -81,7 +81,7 @@ class DataRepository:
 
     def find_target(self, start: Coordinate, home: Coordinate) -> Coordinate:
         """decide where the robot at current_coordinate will try to go"""
-        print("find target from: " + str(start) + "  home: " + str(home))
+        # print("find target from: " + str(start) + "  home: " + str(home))
         best_target = PathItem(home, math.inf)  # return home if there's no where else to go
         # breadth-first search for nodes to put in the heap
         path_queue = deque([PathItem(start, start.distance_to(home))])

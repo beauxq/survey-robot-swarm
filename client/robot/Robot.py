@@ -19,7 +19,7 @@ class Robot:
         """ :returns time taken """
         total_time = 0
 
-        message = Message()
+        message = Message(self.communication)
 
         # objective reading
         already_have = self.data.get_objective(self.interface.position) != Knowledge.UNKNOWN
@@ -59,22 +59,22 @@ class Robot:
 
         while count_home_target < 100:
             target = self.data.find_target(self.interface.position, self.home)
-            print("target:", target)
+            # print("target:", target)
             if target == self.home:
                 count_home_target += 1
             else:
                 count_home_target = 0
 
             path_to_target = self.data.find_path(self.interface.position, target)
-            print("path:", path_to_target)
+            # print("path:", path_to_target)
             if len(path_to_target) > 0:
                 # TODO: get permission from communication thread to make this move
                 total_time += self.interface.turn(path_to_target[0])
                 total_time += self.interface.forward()
                 total_time += self.visit_current_space()
 
-            print(self.data.text_map(self.interface.position, self.interface.facing))
-            print("total time:", total_time)
+            # print(self.data.text_map(self.interface.position, self.interface.facing))
+            # print("total time:", total_time)
             # input()  # wait for enter key - TODO: timing
             # sleep(0.5)
 
