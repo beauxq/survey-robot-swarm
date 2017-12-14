@@ -80,14 +80,14 @@ class DataRepository:
         return True
 
     def find_target(self, start: Coordinate, home: Coordinate) -> Coordinate:
-        """decide where the robot at current_coordinate will try to go"""
+        """decide where the robot at start will try to go"""
         # print("find target from: " + str(start) + "  home: " + str(home))
         best_target = PathItem(home, math.inf)  # return home if there's no where else to go
-        # breadth-first search for nodes to put in the heap
+        # breadth-first search for nodes to compare with best_target
         path_queue = deque([PathItem(start, start.distance_to(home))])
-        bfs_visited = defaultdict(bool)
+        bfs_visited = defaultdict(bool)  # initialize all nodes visited in this bfs = false
 
-        self._mutex.acquire()
+        self._mutex.acquire()  # we don't want communication thread changing data while we do this
 
         while len(path_queue):
             # print("going through path_queue, current length: " + str(len(path_queue)))
@@ -108,10 +108,10 @@ class DataRepository:
                 # print("can travel: " + str(self._can_travel(this_neighbor)))
                 if self._can_travel(this_neighbor) and not bfs_visited[this_neighbor]:
                     # print("can travel and not already visited: " + str(this_neighbor))
-                    # calculate cost
+                    # calculate cost -- add one TRAVEL_WEIGHT and find how much the distance from home has changed
                     distance_to_home_change = this_neighbor.distance_to(home) - current.coordinate.distance_to(home)
                     cost = current.cost + DataRepository.TRAVEL_WEIGHT + distance_to_home_change
-                    if cost - DataRepository.STOP_BFS_THRESHOLD < best_target.cost:
+                    if cost - DataRepository.STOP_BFS_THRESHOLD < best_target.cost:  # localize search
                         path_queue.append(PathItem(this_neighbor, cost))
 
         self._mutex.release()
