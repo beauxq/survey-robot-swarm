@@ -14,6 +14,7 @@ The configuration for this mode is read from config.txt
 ---
 
 python3 main.py 1
+
 python3 main.py 2
 
 Since we didn't set up multiple computers to work together, this mode of operation is for seeing 2 robots explore 1 map. It is to be run in 2 different consoles, started at close to the same time.
