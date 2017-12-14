@@ -15,6 +15,9 @@ class Robot:
 
         self.interface.position = home
 
+        self.wait_for_enter = True  # enter key between each robot movement
+        self.display_text_map = True
+
     def visit_current_space(self) -> float:
         """ :returns time taken """
         total_time = 0
@@ -73,10 +76,13 @@ class Robot:
                 total_time += self.interface.forward()
                 total_time += self.visit_current_space()
 
-            # print(self.data.text_map(self.interface.position, self.interface.facing))
-            # print("total time:", total_time)
-            # input()  # wait for enter key - TODO: timing
-            # sleep(0.5)
+            if self.display_text_map:
+                print(self.data.text_map(self.interface.position, self.interface.facing))
+                print("total time:", total_time)
+                if not self.wait_for_enter:  # 2 program demo
+                    sleep(0.5)  # instead of waiting for enter, we put a delay between each move
+            if self.wait_for_enter:
+                input()  # wait for enter key - TODO: timing
 
         # exit while loop when targeted home 100 times
         self.communication.stop_outgoing_thread()

@@ -4,6 +4,8 @@ import random
 
 
 class EnvironmentSimulator:
+    OBSTACLE_PROBABILITY = 0.3
+
     def __init__(self):
         self._grid = [[GridSpace()]]
 
@@ -13,7 +15,7 @@ class EnvironmentSimulator:
         for y in range(height):
             for x in range(width):
                 # probability of obstacle
-                obstacle_here = random.random() < 0.3
+                obstacle_here = random.random() < EnvironmentSimulator.OBSTACLE_PROBABILITY
                 # no obstacles in corners
                 if (x == 0 or x == width-1) and (y == 0 or y == height-1):
                     obstacle_here = False

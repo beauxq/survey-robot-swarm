@@ -97,6 +97,8 @@ def one_set(seed: int) -> tuple:
     options2["robot_id"] = 1
     options2["robot_count"] = 1
     robot = create_robot_with_options(options2)
+    robot.wait_for_enter = False
+    robot.display_text_map = False
     robot.communication.broadcast = "127.255.255.255"
     result_ll = robot.go()
 
@@ -104,6 +106,8 @@ def one_set(seed: int) -> tuple:
     options2["home_x"] = options2["width"] - 1
     options2["home_y"] = options2["height"] - 1
     robot = create_robot_with_options(options2)
+    robot.wait_for_enter = False
+    robot.display_text_map = False
     robot.communication.broadcast = "127.255.255.255"
     result_ur = robot.go()
 
@@ -116,9 +120,13 @@ def one_set(seed: int) -> tuple:
 
     # create them (changing ports) and run them, collect data
     robot1 = create_robot_with_options(options1)
+    robot1.wait_for_enter = False
+    robot1.display_text_map = False
     robot1.communication.send_port = 7677
     robot1.communication.broadcast = "127.255.255.255"
     robot2 = create_robot_with_options(options2)
+    robot2.wait_for_enter = False
+    robot2.display_text_map = False
     robot2.communication.listen_port = 7677
     robot2.communication.broadcast = "127.255.255.255"
 
@@ -163,6 +171,7 @@ def run_a_robot(demo):
             robot.communication.send_port = 7677
         else:  # should be "2"
             robot.communication.listen_port = 7677
+        robot.wait_for_enter = False
         robot.communication.broadcast = "127.255.255.255"
     print("done time:", robot.go())
 
